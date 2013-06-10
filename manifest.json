@@ -1,0 +1,14 @@
+{
+   "author": "korchasa",
+   "content_scripts": [ {
+      "js": [ "rutracker.user.js" ],
+      "matches": [ "http://rutracker.org/*", "http://www.kinopoisk.ru/level/1/film/*" ],
+      "run_at": "document_end"
+   } ],
+   "description": "",
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC4MThVtkt6XLBytnMxqeqMC8WINJCXfM7oWALjn12A6iZi/Ve63OQ/HDUK090soIV52HfMvwi1jcStyr+QfGT0BOC8/JzSZqYaT2Jl3oaPsJsibkbI2rFuLZIfRZu8bPyl4A1zMXXhFwqwbdKhde6MCw9Ol9ZpGsdmFJu3Xnif9wIDAQAB",
+   "name": "RuTracker + Kinopoisk",
+   "permissions": [ "http://*.kinopoisk.ru/*", "http://rutracker.org/*", "http://*.rutracker.org/*" ],
+   "update_url": "http://clients2.google.com/service/update2/crx",
+   "version": "0.3"
+}
