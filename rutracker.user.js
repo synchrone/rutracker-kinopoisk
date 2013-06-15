@@ -14,18 +14,23 @@ var rt =
   parse_info_string: function($info_row)
   {
     var $info_el = $info_row.find('td:eq(' + this.title_column_index + ') a');
-    var seeds_count = $info_row.find('td:eq(' + this.seeds_column_index + ') b').html();
-    var leechers_count = $info_row.find('td:eq(' + this.leechers_column_index + ') b').html();
+    var seeds_count = $info_row.find('td.seedmed b').html();
+    var leechers_count = $info_row.find('td.leechmed b').html();
     if(!$info_el.html()) return;
     var matches = $info_el.html()
       .replace(/<wbr>/g, '')
-      .match(/^([^\/]+)[^\[]+\[([^\]]+)](.*)/i);
+      .match(/^([^\(^<]+)[^\[]+\[([^\]]+)](.*)/i);
     if(!matches) return;
+    //decode html entities
+    var titles_str = $("<div/>").html(matches[1].replace(/<wbr>/g, '')).text();
+    var titles = titles_str.split('/');
     var video = matches[2].split(',');
     video = $.trim(video[video.length - 1]);
     var audio = $.trim(matches[3]);
     var result = {
-      title: $.trim(matches[1].replace(/<wbr>/g, '')),
+      title_ru: $.trim(titles[0]),
+      title_orig: $.trim(titles.length == 2 ? titles[1] : titles[0]),
+      title_full: titles_str,
       video: video,
       audio: audio,
       href : $info_el.attr('href'),
@@ -39,7 +44,7 @@ var rt =
 
 var kp =
 {
-  rating_by_title_url: 'http://s.kinopoisk.ru/search/chrometoolbar.php?v=1&query=',
+  rating_by_title_url: 'http://www.kinopoisk.ru/search/chrometoolbar.php?v=1&query=',
   movie_by_title_url: 'http://www.kinopoisk.ru/index.php?first=yes&kp_query=',
 };
 
@@ -71,7 +76,7 @@ function main_rutracker()
 
   $(rt.header_selector+' th:eq('+rt.title_column_index+')').after('<th>Рейтинг</th>');
   $(rt.line_selector).each(function() {
-    $(this).find('td:eq('+rt.title_column_index+')').after('<td class="row4" style="font-size:9px !important"></td>');
+    $(this).find('td:eq('+rt.title_column_index+')').after('<td class="row4">&hellip;</td>');
   });
 
   $(rt.line_selector).each(function(top_index, top_el)
@@ -81,14 +86,17 @@ function main_rutracker()
     var top_info = rt.parse_info_string($top_el);
     if(!top_info) return;
 
-    var encoded_title = encodeURIComponent(top_info.title);
+    var encoded_title = encodeURIComponent(top_info.title_orig);
     $.getJSON(kp.rating_by_title_url+encoded_title, function(res)
     {
-      if(undefined == res.rating) return;
-      var font_size = 2.2 * parseFloat(res.rating);
-      $top_el.find('td:eq('+(rt.title_column_index+1)+')')
-        .html('<a class="bold" href="'+kp.movie_by_title_url+encoded_title+'">'+(res.rating)+'</a>')
-        .css('font-size', font_size+'px !important');
+      var $el = $top_el.find('td:eq('+(rt.title_column_index+1)+')');
+      if(undefined == res.rating) {
+        $el.html('-');
+        return;
+      }
+      var font_size = 9 + 6 * (parseFloat(res.rating) - 6);
+      $el.html('<a class="bold" style="font-size:'+font_size+'px !important;text-decoration:none" href="'+kp.movie_by_title_url+encoded_title+'">'
+          +(res.rating)+'</a>');
     });
 
     $(rt.line_selector).each(function(child_index, child_el)
@@ -97,22 +105,22 @@ function main_rutracker()
       var child_info = rt.parse_info_string($(child_el));
       if(!child_info) return;
 
-      if(top_info.title.toLowerCase() == child_info.title.toLowerCase())
+      if(top_info.title_orig.toLowerCase() == child_info.title_orig.toLowerCase())
       {
-        console.log(child_info)
+        //console.log(child_info);
         var $title = $(top_el).find('td:eq('+(rt.title_column_index)+')');
         var $span = $title.find('div[class="variants"]');
         if(!$span.length)
         {
           $span = $('<div class="variants" style="display:none"></div>')
             .insertAfter($title.find('a:first'));
-          $('&nbsp;<a href="#" class="toggle" style="border-bottom:1px dashed #069;text-decoration:none">другие варианты</a>')
+          $('<a href="#" class="toggle" style="border-bottom:1px dashed #069;text-decoration:none;margin-left:10px">другие варианты</a>')
             .insertAfter($title.find('a:first'));
         }
         $span.append(
           '<p><a href="'+child_info.href+'">'
-            +child_info.video+' / '+child_info.audio+' '+child_info.seeds+':'+child_info.leechers+
-          '</a></p>'
+            +child_info.video+' / '+child_info.audio+
+          '</a> <span title="раздающие/качающие">'+child_info.seeds+':'+child_info.leechers+'</span></p>'
         );
         $(child_el).remove();
       }
@@ -134,36 +142,39 @@ function main_kinopoisk()
     return null == rt_response.match('<form method="post" action="http://login.rutracker.org/forum/login.php">');
   }
 
-  function show_torrents(title, rt_response)
+  function show_torrents(title_ru, rt_response, $torrents_container)
   {
-    $('table.info').append('<tr><td class="type">торренты</td><td class="torrents">Загружаю...</td></tr>');
     var is_torrent_found = false;
-    var $torrents_container = $('table.info td.torrents');
     $(rt_response).find(rt.line_selector).each(function() {
       if(!is_torrent_found)
         $torrents_container.html('');
       var torrent_info = rt.parse_info_string($(this));
-      if(!torrent_info || torrent_info.title != title)
+      if(!torrent_info || torrent_info.title_ru != title_ru)
         return;
       var torrent_url = rt.torrents_base_url+torrent_info.href;
       $torrents_container.append('<a href="'+torrent_url+'">'+torrent_info.quality+'</a><br/>');
       is_torrent_found = true;
     });
-    if(!is_torrent_found)
-      $torrents_container.html('Нету');
+    return is_torrent_found;
   }
 
-  var title = $.trim($('h1.moviename-big').html());
+  $('<tr><td class="type">торренты</td><td class="torrents">Загружаю...</td></tr>').appendTo('table.info');
+  var $torrents_container = $('table.info td.torrents');
+  var title_ru = $.trim($('#headerFilm > h1.moviename-big').html());
+  var title_full =  title_ru + ' / ' + $.trim($('#headerFilm > span').html());
+  var full_search_url = rt.search_url+'?nm='+title_full+'&o=10&s=2';
   $.ajax({
-      type:"POST",
-      url: rt.search_url,
+      type:"GET",
+      url: full_search_url,
       dataType: 'text',
-      data: {nm: title, o:10, s:2},
       success: function(data) {
         if(!is_logged_on_rutracker(data))
-          common.showMessage('Залогиньтесь на <a href="http://rutracker.org">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
+          $torrents_container.html('Залогиньтесь на <a href="http://rutracker.org">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
         else
-          show_torrents(title, data);
+        {
+          if(!show_torrents(title_ru, data, $torrents_container))
+            $torrents_container.html('Мы не нашли, <a href="'+full_search_url+'">попробуйте сами</a>');
+        }
       }
   });
 };
