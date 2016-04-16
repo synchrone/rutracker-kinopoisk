@@ -2,8 +2,8 @@
 // @name         Rutracker+Kinopoisk
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  try to take over the world!
-// @author       You
+// @description  Adds rutracker direct links to kinopoisk, and deduplicates search results on rutracker
+// @author
 // @include	https://kinopoisk.ru/level/1/film/*
 // @include	https://www.kinopoisk.ru/level/1/film/*
 // @include	https://www.kinopoisk.ru/film/*
