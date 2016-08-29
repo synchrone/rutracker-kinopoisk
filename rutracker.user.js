@@ -180,7 +180,7 @@ function main_kinopoisk()
         });
         return is_torrent_found;
     }
-debugger;
+    
     $('<tr><td class="type">торренты</td><td class="torrents">Загружаю...</td></tr>').appendTo('table.info');
     var $torrents_container = $('table.info td.torrents');
     var title_ru = $.trim($('#headerFilm > h1.moviename-big').html());
