@@ -92,8 +92,6 @@ function main_rutracker()
 {
     if(null == document.getElementById('tor-tbl')) return;
 
-    common.loadJQuery();
-
     var default_font_size = '12px';
 
     $(rt.header_selector+' th:eq('+rt.title_column_index+')').after('<th>Рейтинг</th>');
@@ -109,16 +107,21 @@ function main_rutracker()
         if(!top_info) return;
 
         var encoded_title = encodeURIComponent(top_info.title_orig);
-        $.getJSON(kp.rating_by_title_url+encoded_title, function(res)
-        {
-            var $el = $top_el.find('td:eq('+(rt.title_column_index+1)+')');
-            if(undefined == res.rating) {
-                $el.html('-');
-                return;
+        GM_xmlhttpRequest({
+            method:"GET",
+            url: kp.rating_by_title_url+encoded_title,
+            onload: function(r) {
+                debugger;
+                var res = JSON.parse(r.responseText);
+                var $el = $top_el.find('td:eq('+(rt.title_column_index+1)+')');
+                if(undefined == res.rating) {
+                    $el.html('-');
+                    return;
+                }
+                var font_size = 9 + 6 * (parseFloat(res.rating) - 6);
+                $el.html('<a class="bold" style="font-size:'+font_size+'px !important;text-decoration:none" href="'+kp.movie_by_title_url+encoded_title+'">'
+                         +(res.rating)+'</a>');
             }
-            var font_size = 9 + 6 * (parseFloat(res.rating) - 6);
-            $el.html('<a class="bold" style="font-size:'+font_size+'px !important;text-decoration:none" href="'+kp.movie_by_title_url+encoded_title+'">'
-                +(res.rating)+'</a>');
         });
 
         $(rt.line_selector).each(function(child_index, child_el)
