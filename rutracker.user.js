@@ -168,11 +168,11 @@ function main_kinopoisk()
     function render_torrents(title_ru, rt_response)
     {
         var is_torrent_found = false;
-
+        var onClickClose = 'onclick="var p = $(this).parent(); if(p.is(&quot;.closed&quot;)){p.removeClass(&quot;closed&quot;);}else{p.addClass(&quot;closed&quot;);}"';
         var base_template = $(
             '<div class="friendsByInterests closed" style="width: auto; margin-right: -140px; margin-left: -22px;">'+
-                '<div class="switch" onclick="var p = $(this).parent(); if(p.is(&quot;.closed&quot;)){p.removeClass(&quot;closed&quot;);}else{p.addClass(&quot;closed&quot;);}"></div>'+
-                '<div class="top">'+
+                '<div class="switch" '+onClickClose+'></div>'+
+                '<div class="top" '+onClickClose+'>'+
                     '<div style="float:left;"><span class="link link_friend">Торренты с rutracker.org</span></div>'+
                     '<div class="friend average link green" style=""><span>Сидеры</span></div>'+
                 '</div>'+
