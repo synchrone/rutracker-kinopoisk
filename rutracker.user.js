@@ -111,7 +111,6 @@ function main_rutracker()
             method:"GET",
             url: kp.rating_by_title_url+encoded_title,
             onload: function(r) {
-                debugger;
                 var res = JSON.parse(r.responseText);
                 var $el = $top_el.find('td:eq('+(rt.title_column_index+1)+')');
                 if(undefined == res.rating) {
@@ -205,8 +204,8 @@ function main_kinopoisk()
 
     $('<tr><td colspan="2" class="torrents">Ищем торренты...</td></tr>').appendTo('table.info');
     var $torrents_container = $('table.info td.torrents');
-    var title_ru = $.trim($('#headerFilm > h1.moviename-big').html());
-    var title_full =  title_ru + ' / ' + $.trim($('#headerFilm > span').html());
+    var title_ru = $.trim($('#headerFilm > h1.moviename-big').text().replace(/\s+/g, ' '));
+    var title_full =  title_ru + ' / ' + $.trim($('#headerFilm > span').text().replace(/\s+/g, ' '));
 
     if(title_full.length > 60){title_full = title_ru;}
     var full_search_url = rt.search_url+'?nm='+encodeURIComponent(title_full)+'&o=10&s=2';
