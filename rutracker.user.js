@@ -2,8 +2,8 @@
 // @name         Rutracker+Kinopoisk
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  Adds rutracker direct links to kinopoisk, and deduplicates search results on rutracker
-// @author
+// @description  try to take over the world!
+// @author       You
 // @include	https://kinopoisk.ru/level/1/film/*
 // @include	https://www.kinopoisk.ru/level/1/film/*
 // @include	https://www.kinopoisk.ru/film/*
@@ -47,7 +47,11 @@ var rt =
         if (!seeds_count) return;
 
         var leechers_count = $info_row.find('td.leechmed b').html();
-        var size = $info_row.find('td.tor-size a').html().replace(' ↓','');
+
+        var size = $info_row.find('td.tor-size a').html();
+        if (!size) return;  // non-downloadable torrent does not have a size-url
+
+        size = size.replace(' ↓','');
 
         var matches = $info_el.html()
             .replace(/<wbr>/g, '')
@@ -202,28 +206,63 @@ function main_kinopoisk()
         return is_torrent_found ? base_template : null;
     }
 
-    $('<tr><td colspan="2" class="torrents">Ищем торренты...</td></tr>').appendTo('table.info');
-    var $torrents_container = $('table.info td.torrents');
-    var title_ru = $.trim($('#headerFilm > h1.moviename-big').text().replace(/\s+/g, ' '));
-    var title_full =  title_ru + ' / ' + $.trim($('#headerFilm > span').text().replace(/\s+/g, ' '));
 
-    if(title_full.length > 60){title_full = title_ru;}
-    var full_search_url = rt.search_url+'?nm='+encodeURIComponent(title_full)+'&o=10&s=2';
+    var mobile_header = $('.movie-header');
 
-    GM_xmlhttpRequest({
-        method:"GET",
-        url: full_search_url,
-        onerror: function(e){ console.log(e); },
-        onload: function(r) {
-            var data = r.responseText;
-            if(!is_logged_on_rutracker(data))
-                $torrents_container.html('Залогиньтесь на <a href="https://rutracker.org" target="_blank">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
-            else
-            {
-                $torrents_container.html(render_torrents(title_ru, data) || 'Мы не нашли, <a href="'+full_search_url+'">попробуйте сами</a>');
-            }
+    var $torrents_container = null;
+    var title_ru = null;
+    var title_orig = null;
+    var year = null;
+
+    function full_search_url(title_ru, title_orig, year){
+        var title_full =  title_ru + ' / ' + title_orig;
+        if (year && title_full.length <= 59 - year.length){
+            title_full += ' ' + year;
         }
-    });
+
+        if(title_full.length > 60){title_full = title_ru;}
+        var full_search_url = rt.search_url+'?nm='+encodeURIComponent(title_full)+'&o=10&s=2';
+        return full_search_url;
+    }
+
+    if (mobile_header.length > 0) {
+        // mobile_header[0].insertAdjacentHTML('afterend', '<div class="movie-page__buttons-container"><div class="movie-page__tickets-button"></div></div>');
+        // $torrents_container = $(mobile_header[0].nextSibling.firstChild);
+
+        title_ru = $.trim($('.movie-header__title').html());
+        title_orig = $.trim($('.movie-header__original-title').html());
+        year = $.trim($('.movie-header__years').html());
+
+        var searchBtn = $('&nbsp;<button class="touch-button touch-button_size_m" type="button" onclick="window.open(\''+full_search_url(title_ru, title_orig, year)+'\')">\n' +
+                        '    <span class="touch-button__content">Скачать</span>\n' +
+                        '  </button>');
+
+        $('.movie-header__folder').append(searchBtn);
+
+    } else {
+        $('<tr><td colspan="2" class="torrents">Ищем торренты...</td></tr>').appendTo('table.info');
+        $torrents_container = $('table.info td.torrents');
+        title_ru = $.trim($('#headerFilm > h1.moviename-big').html());
+        title_orig = $.trim($('#headerFilm > span').html());
+
+
+
+
+        GM_xmlhttpRequest({
+            method:"GET",
+            url: full_search_url(title_ru, title_orig),
+            onerror: function(e){ console.log(e); },
+            onload: function(r) {
+                var data = r.responseText;
+                if(!is_logged_on_rutracker(data))
+                    $torrents_container.html('Залогиньтесь на <a href="https://rutracker.org" target="_blank">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
+                else
+                {
+                    $torrents_container.html(render_torrents(title_ru, data) || 'Мы не нашли, <a href="'+full_search_url+'">попробуйте сами</a>');
+                }
+            }
+        });
+    }
 }
 
 if(window.location.href.match(/^https:\/\/www.kinopoisk.ru/i))
