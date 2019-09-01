@@ -242,11 +242,8 @@ function main_kinopoisk()
     } else {
         $('<tr><td colspan="2" class="torrents">Ищем торренты...</td></tr>').appendTo('table.info');
         $torrents_container = $('table.info td.torrents');
-        title_ru = $.trim($('#headerFilm > h1.moviename-big').html());
-        title_orig = $.trim($('#headerFilm > span').html());
-
-
-
+        title_ru = $.trim($('#headerFilm > h1.moviename-big')[0].innerText);
+        title_orig = $.trim($('#headerFilm > span')[0].innerText);
 
         GM_xmlhttpRequest({
             method:"GET",
