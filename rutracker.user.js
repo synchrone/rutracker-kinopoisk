@@ -229,8 +229,8 @@ function main_kinopoisk()
         // mobile_header[0].insertAdjacentHTML('afterend', '<div class="movie-page__buttons-container"><div class="movie-page__tickets-button"></div></div>');
         // $torrents_container = $(mobile_header[0].nextSibling.firstChild);
 
-        title_ru = $.trim($('.movie-header__title').html());
-        title_orig = $.trim($('.movie-header__original-title').html());
+        title_ru = $.trim($('.movie-header__title')[0].innerText);
+        title_orig = $.trim($('.movie-header__original-title')[0].innerText);
         year = $.trim($('.movie-header__years').html());
 
         var searchBtn = $('&nbsp;<button class="touch-button touch-button_size_m" type="button" onclick="window.open(\''+full_search_url(title_ru, title_orig, year)+'\')">\n' +
