@@ -171,39 +171,25 @@ function main_kinopoisk()
     function render_torrents(title_ru, rt_response)
     {
         var is_torrent_found = false;
-        var onClickClose = 'onclick="var p = $(this).parent(); if(p.is(&quot;.closed&quot;)){p.removeClass(&quot;closed&quot;);}else{p.addClass(&quot;closed&quot;);}"';
-        var base_template = $(
-            '<div class="friendsByInterests closed" style="width: auto; margin-right: -140px; margin-left: -22px;">'+
-                '<div class="switch" '+onClickClose+'></div>'+
-                '<div class="top" '+onClickClose+'>'+
-                    '<div style="float:left;"><span class="link link_friend">Торренты с rutracker.org</span></div>'+
-                    '<div class="friend average link green" style=""><span>Сидеры</span></div>'+
-                '</div>'+
-                '<div class="list friend resultList"><div></div></div>'+
-            '</div>'
-        );
-        var resultList = base_template.find('.resultList div');
+        var resultList = $('<div class="resultList"></div>');
 
         $(rt_response).find(rt.line_selector).each(function() {
-            if(!is_torrent_found)
-                $torrents_container.html('');
             var torrent_info = rt.parse_info_string($(this));
             if(!torrent_info || torrent_info.title_ru != title_ru)
                 return;
             var info_url = rt.torrents_base_url+torrent_info.href;
             var torrent_url = rt.torrents_base_url+torrent_info.href_dl;
 
-            resultList.append(
-                '<div class="item">'+
-                    '<div class="userPic" style="text-align: center; padding-top: 4px;"><a href="'+torrent_url+'"><img class="coverBG" style="height: 22px; width: 22px;" src="https://static.t-ru.org/templates/v1/images/attach_big.gif" alt=""></a></div>'+
-                    '<div class="dots"><div class="name"><a href="'+info_url+'" style="display: inline">'+torrent_info.quality+'<span>'+torrent_info.size+'</span><i></i></a></div></div>'+
-                    '<div class="status" style="line-height: 28px;">'+torrent_info.seeds+'</div>'+
+            resultList.append('<div class="styles_rowDark__2qC4I styles_row__2ee6F resultList">'+
+                '<div class="styles_valueDark__3dsUz styles_value__2F1uj">'+
+                '<a class="styles_linkDark__3aytH styles_link__1N3S2" href="'+torrent_url+'">'+torrent_info.quality+', '+torrent_info.size+', <span style="color: green;">SE:'+torrent_info.seeds+'</span></a>'+
+                '</div>'+
                 '</div>'
             );
             is_torrent_found = true;
         });
 
-        return is_torrent_found ? base_template : null;
+        return is_torrent_found ? $(resultList[0]) : null;
     }
 
 
@@ -240,22 +226,25 @@ function main_kinopoisk()
         $('.movie-header__folder').append(searchBtn);
 
     } else {
-        $('<tr><td colspan="2" class="torrents">Ищем торренты...</td></tr>').appendTo('table.info');
-        $torrents_container = $('table.info td.torrents');
-        title_ru = $.trim($('#headerFilm > h1.moviename-big')[0].innerText);
-        title_orig = $.trim($('#headerFilm > span')[0].innerText);
+        title_ru = $.trim($('h1[itemprop=name]')[0].innerText);
+        title_orig = $.trim($('h1[itemprop=name] + div > span:first-child')[0].innerText);
+        const fsu = full_search_url(title_ru, title_orig);
+
+        const movieInfo = $("div[class*='styles_md_11'] h3.film-page-section-title").parent();
+        movieInfo.append('<h3 class="film-page-section-title styles_tableHeader__22f5C styles_rootSm__3hkVq styles_root__2YHLV styles_rootDark__QT0qE"><a style="color: #000;" href="'+fsu+'">rutracker.org</a></h3>');
 
         GM_xmlhttpRequest({
             method:"GET",
-            url: full_search_url(title_ru, title_orig),
+            url: fsu,
             onerror: function(e){ console.log(e); },
             onload: function(r) {
                 var data = r.responseText;
                 if(!is_logged_on_rutracker(data))
-                    $torrents_container.html('Залогиньтесь на <a href="https://rutracker.org" target="_blank">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
+                    movieInfo.append('Залогиньтесь на <a href="https://rutracker.org" target="_blank">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
                 else
                 {
-                    $torrents_container.html(render_torrents(title_ru, data) || 'Мы не нашли, <a href="'+full_search_url+'">попробуйте сами</a>');
+                    const renderedResults = render_torrents(title_ru, data) || 'Мы не нашли, <a href="'+full_search_url(title_ru, title_orig)+'">попробуйте сами</a>';
+                    movieInfo.append(renderedResults);
                 }
             }
         });
