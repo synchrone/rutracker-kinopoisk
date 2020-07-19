@@ -7,7 +7,7 @@ RuTracker + KinoPoisk
 
 # Установка
 1. Поставить [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-2. Открыть [Userscript](https://github.com/korchasa/rutracker-kinopoisk/raw/master/rutracker.user.js) из этого репозитория, и Tampermonkey предпложит его добавить в Chrome
+2. Открыть [Userscript](https://github.com/synchrone/rutracker-kinopoisk/raw/master/rutracker.user.js) из этого репозитория, и Tampermonkey предпложит его добавить в Chrome
 
 ### Интеграция с Кинопоиском
 ![Kinopoisk.ru](https://raw.githubusercontent.com/synchrone/rutracker-kinopoisk/master/Screenshot.png)
