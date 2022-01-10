@@ -1,3 +1,4 @@
+
 // ==UserScript==
 // @name         Rutracker+Kinopoisk
 // @namespace    http://tampermonkey.net/
@@ -215,8 +216,8 @@ function main_kinopoisk()
         // mobile_header[0].insertAdjacentHTML('afterend', '<div class="movie-page__buttons-container"><div class="movie-page__tickets-button"></div></div>');
         // $torrents_container = $(mobile_header[0].nextSibling.firstChild);
 
-        title_ru = $.trim($('.movie-header__title')[0].innerText);
-        title_orig = $.trim($('.movie-header__original-title')[0].innerText);
+        title_ru = $.trim($('.movie-header__title').text());
+        title_orig = $.trim($('.movie-header__original-title').text());
         year = $.trim($('.movie-header__years').html());
 
         var searchBtn = $('&nbsp;<button class="touch-button touch-button_size_m" type="button" onclick="window.open(\''+full_search_url(title_ru, title_orig, year)+'\')">\n' +
@@ -226,23 +227,27 @@ function main_kinopoisk()
         $('.movie-header__folder').append(searchBtn);
 
     } else {
-        title_ru = $.trim($('h1[itemprop=name]')[0].innerText);
-        title_orig = $.trim($('h1[itemprop=name] + div > span:first-child')[0].innerText);
+        title_ru = $.trim($('h1[itemprop=name]').text().replace(/\(\d{4}\)$/,'')); // and cut year
+        const orig_title_el = $('h1[itemprop=name] + div > span');
+        if(orig_title_el.length > 1){
+            title_orig = $.trim(orig_title_el[0].innerText);
+        }else{
+            title_orig = title_ru;
+        }
+
         const fsu = full_search_url(title_ru, title_orig);
 
-        const movieInfo = $("div[class*='styles_md_11'] h3.film-page-section-title").parent();
-        movieInfo.append('<h3 class="film-page-section-title styles_tableHeader__22f5C styles_rootSm__3hkVq styles_root__2YHLV styles_rootDark__QT0qE"><a style="color: #000;" href="'+fsu+'">rutracker.org</a></h3>');
-
+        const movieInfo = $('[data-test-id="encyclopedic-table"]');
         GM_xmlhttpRequest({
             method:"GET",
             url: fsu,
             onerror: function(e){ console.log(e); },
             onload: function(r) {
                 var data = r.responseText;
-                if(!is_logged_on_rutracker(data))
+                movieInfo.append('<h3 class="film-page-section-title styles_tableHeader__22f5C styles_rootSm__3hkVq styles_root__2YHLV styles_rootDark__QT0qE"><a style="color: #000;" href="'+fsu+'">rutracker.org</a></h3>');
+                if(!is_logged_on_rutracker(data)){
                     movieInfo.append('Залогиньтесь на <a href="https://rutracker.org" target="_blank">rutracker.org</a>, и мы начнем вам показывать ссылки на торренты.');
-                else
-                {
+                }else{
                     const renderedResults = render_torrents(title_ru, data) || 'Мы не нашли, <a href="'+full_search_url(title_ru, title_orig)+'">попробуйте сами</a>';
                     movieInfo.append(renderedResults);
                 }
